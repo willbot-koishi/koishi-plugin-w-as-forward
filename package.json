@@ -9,14 +9,20 @@
     "dist"
   ],
   "license": "MIT",
-  "scripts": {},
   "keywords": [
     "chatbot",
     "koishi",
     "plugin"
   ],
-  "devDependencies": {},
   "peerDependencies": {
     "koishi": "^4.18.0"
+  },
+  "dependencies": {
+    "@satorijs/element": "^3.1.7"
+  },
+  "scripts": {
+    "build": "yarn workspace willbot build w-as-forward",
+    "bump": "yarn workspace willbot bump w-as-forward",
+    "pub": "yarn workspace willbot pub w-as-forward"
   }
 }
