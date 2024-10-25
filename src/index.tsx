@@ -31,6 +31,12 @@ declare global {
 export function apply(ctx: Context, config: Config) {
     const sum = (xs: number[]) => xs.reduce((a, c) => a + c, 0)
 
+    const filterOr = <T,>(xs: T[], pred: (x: T) => boolean): [ T[], T[] ] => {
+        const ts: T[] = [], fs: T[] = []
+        for (const x of xs) (pred(x) ? ts : fs).push(x)
+        return [ ts, fs ]
+    }
+
     const getElementLength = (element: h) => element.type === 'text' ? element.toString().length : 1
 
     const isAsForwardElement = (element: h): element is AsForwardElement => element.type === 'as-forward'
@@ -38,18 +44,22 @@ export function apply(ctx: Context, config: Config) {
     const renderAsForward = ({ level }: AsForwardAttr, children: h[], _session: Session): h => {
         if (level === 'always' ||
             level === 'auto' && sum(children.map(getElementLength)) > config.minLength
-        ) return <message forward>
-            { children }
-        </message>
+        ) {
+            const [ topLevelElements, otherElements ] = filterOr(children, el => el.type === 'quote')
+            return <>
+                { topLevelElements }
+                <message forward>
+                    { otherElements }
+                </message>
+            </>
+        }
         return <>{ children }</>
     }
 
     ctx.before('send', (session) => {
         let elements = h.parse(session.content)
-        if (elements.length === 1) {
-            const [ element ] = elements
-            if (! isAsForwardElement(element))
-                session.elements = [ renderAsForward({ level: 'auto' }, [ element ], session) ]
+        if (elements.length !== 1 || ! isAsForwardElement(elements[0])) {
+            session.elements = [ renderAsForward({ level: 'auto' }, elements, session) ]
         }
     }, true)
 
